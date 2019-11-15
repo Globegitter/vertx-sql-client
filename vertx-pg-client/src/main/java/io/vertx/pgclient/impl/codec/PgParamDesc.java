@@ -32,6 +32,10 @@ class PgParamDesc extends ParamDesc {
   // OIDs
   private final DataType[] paramDataTypes;
 
+  // With postgresql of at least version 9.4 one can send a maximum of 65535 parameters.
+  // In earlier versions it might be fewer.
+  private final int maxPgParameters = 65535;
+
   PgParamDesc(DataType[] paramDataTypes) {
     this.paramDataTypes = paramDataTypes;
   }
@@ -42,6 +46,9 @@ class PgParamDesc extends ParamDesc {
 
   @Override
   public String prepare(TupleInternal values) {
+    if (values.size() > maxPgParameters) {
+      return "Sent " + values.size() + " values in prepared statement but nor more than " + maxPgParameters + " allowed.";
+    }
     if (values.size() != paramDataTypes.length) {
       return buildReport(values, "values.size() is of length " + values.size() + "and paramDataTypes.length is of size " + paramDataTypes.length);
     }
